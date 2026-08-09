@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manufactured Move — interactive simulation</title>
+</head>
+<body>
+<style>
+  :root{
+    --ground:#0E1513; --surface:#17211D; --surface-2:#1F2B26;
+    --ink:#E9EEEA; --muted:#8FA098; --accent:#E3AC46; --accent-2:#F0C877;
+    --gain:#37BE84; --loss:#E35849; --line:rgba(233,238,234,0.11);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,"Cascadia Mono","Roboto Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:light){
+    :root{ --ground:#F2F5F1; --surface:#FFFFFF; --surface-2:#F4F7F3; --ink:#13201A; --muted:#556259; --accent:#986710; --accent-2:#7E540B; --gain:#137F56; --loss:#C13A2E; --line:rgba(19,32,26,0.13); }
+  }
+  :root[data-theme="dark"]{ --ground:#0E1513; --surface:#17211D; --surface-2:#1F2B26; --ink:#E9EEEA; --muted:#8FA098; --accent:#E3AC46; --accent-2:#F0C877; --gain:#37BE84; --loss:#E35849; --line:rgba(233,238,234,0.11); }
+  :root[data-theme="light"]{ --ground:#F2F5F1; --surface:#FFFFFF; --surface-2:#F4F7F3; --ink:#13201A; --muted:#556259; --accent:#986710; --accent-2:#7E540B; --gain:#137F56; --loss:#C13A2E; --line:rgba(19,32,26,0.13); }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.62;-webkit-font-smoothing:antialiased}
+  .page{max-width:864px;margin:0 auto;padding:56px 24px 68px;position:relative}
+  .theme{position:absolute;top:20px;right:24px;background:transparent;border:1px solid var(--line);color:var(--muted);font:500 11px/1 var(--mono);letter-spacing:.12em;padding:8px 11px;border-radius:7px;cursor:pointer;text-transform:uppercase}
+  .theme:hover{color:var(--ink);border-color:var(--accent)}
+  .theme:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .eyebrow{font:500 12px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+  h1{font:600 clamp(42px,8vw,72px)/0.96 var(--mono);letter-spacing:-0.035em;margin:0 0 20px;text-wrap:balance}
+  .thesis{font-size:clamp(16px,2.1vw,19px);color:var(--muted);max-width:62ch;margin:0}
+  .thesis b{color:var(--ink);font-weight:600}
+  .panel{margin:44px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 26px 30px}
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px 28px}
+  .ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--muted);margin-bottom:5px}
+  .ctrl .v{font:600 13px/1 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--accent);height:22px;cursor:pointer;margin:0}
+  input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:2px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0 6px}
+  .stat{background:var(--surface-2);border-radius:11px;padding:15px 16px}
+  .stat .k{font-size:12px;color:var(--muted);margin-bottom:9px}
+  .stat .n{font:600 clamp(23px,4.4vw,31px)/1 var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+  .chart{margin:24px 0 4px}
+  svg{display:block;width:100%;height:auto}
+  #mm-line{stroke:var(--accent)}
+  #mm-entry{fill:var(--surface);stroke:var(--accent)}
+  #mm-settle{fill:var(--gain)}
+  #mm-open,#mm-entryx{stroke:var(--line)}
+  #svg text{fill:var(--muted);font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .legend{display:flex;flex-wrap:wrap;gap:20px;font-size:12.5px;color:var(--muted);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .pl{display:flex;flex-direction:column;gap:11px;margin-top:26px}
+  .plrow{display:grid;grid-template-columns:120px 1fr 108px;align-items:center;gap:14px}
+  .plrow .k{font-size:13px;color:var(--muted)}
+  .track{position:relative;height:26px;background:var(--surface-2);border-radius:8px;overflow:hidden}
+  .center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+  .bar{position:absolute;top:4px;bottom:4px;width:0;border-radius:4px;transition:width .38s cubic-bezier(.2,.7,.2,1),background .2s}
+  .plrow .val{font:600 15px/1 var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+  .how{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin:54px 0 0}
+  .step .no{font:600 13px/1 var(--mono);color:var(--accent);letter-spacing:.14em;margin-bottom:11px}
+  .step h3{font:600 16px/1.3 var(--sans);margin:0 0 7px;color:var(--ink)}
+  .step p{font-size:14px;color:var(--muted);margin:0}
+  .takeaway{margin:50px 0 0;padding:20px 24px;border-left:3px solid var(--accent);border-radius:0;background:var(--surface);font-size:16.5px;color:var(--ink)}
+  .takeaway b{color:var(--accent);font-weight:600}
+  footer{margin:50px 0 0;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.75}
+  footer a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+  footer a:hover{border-color:var(--accent);color:var(--accent)}
+  @media (max-width:620px){ .stats{grid-template-columns:1fr 1fr} .how{grid-template-columns:1fr} .plrow{grid-template-columns:100px 1fr 92px} }
+  @media (prefers-reduced-motion:reduce){ .bar{transition:none} }
+</style>
+
+<div class="page">
+  <button class="theme" id="themeBtn" aria-label="Switch colour theme">Theme</button>
+
+  <div class="eyebrow">Expiry-day strategy · interactive simulation</div>
+  <h1>Manufactured Move</h1>
+  <p class="thesis">Spend a little to move the index in the <b>small</b> cash market, so a <b>much larger</b> options book — set at the peak you just created — settles in your favour. This is the trade at the centre of SEBI's case against Jane Street, rebuilt as a sandbox you can steer.</p>
+
+  <section class="panel" aria-label="Interactive simulation">
+    <div class="controls">
+      <div class="ctrl"><label>Pump size <span class="v" id="v-acc"></span></label><input type="range" id="s-acc" min="0" max="4000" step="50" value="1000"></div>
+      <div class="ctrl"><label>Options book size <span class="v" id="v-opt"></span></label><input type="range" id="s-opt" min="0" max="12000" step="100" value="5000"></div>
+      <div class="ctrl"><label>Permanent impact &#947; <span class="v" id="v-gam"></span></label><input type="range" id="s-gam" min="0.0005" max="0.005" step="0.0005" value="0.002"></div>
+      <div class="ctrl"><label>Temporary impact &#951; <span class="v" id="v-eta"></span></label><input type="range" id="s-eta" min="0.001" max="0.02" step="0.001" value="0.004"></div>
+      <div class="ctrl"><label>Marking the close <span class="v" id="v-sh"></span></label><input type="range" id="s-sh" min="0" max="2000" step="50" value="0"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Manufactured move</div><div class="n" id="c-move"></div></div>
+      <div class="stat"><div class="k">Leverage over cash</div><div class="n" id="c-lev"></div></div>
+      <div class="stat"><div class="k">Total profit</div><div class="n" id="c-tot"></div></div>
+    </div>
+
+    <figure class="chart" style="margin-block:24px 4px">
+      <svg id="svg" viewBox="0 0 864 232" role="img" aria-label="The manufactured index path: pumped up to a peak where the options book is established, then walked back down to settlement.">
+        <line id="mm-entryx" y1="18" y2="206" stroke="var(--line)" stroke-dasharray="3 4"></line>
+        <line id="mm-open" x1="6" x2="858" stroke="var(--line)" stroke-dasharray="4 5"></line>
+        <path id="mm-line" fill="none" stroke="var(--accent)" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"></path>
+        <circle id="mm-entry" r="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.25"></circle>
+        <circle id="mm-settle" r="5" fill="var(--gain)"></circle>
+        <text id="mm-hi" x="8" y="14" font-size="11" fill="var(--muted)" font-family="var(--mono)"></text>
+        <text id="mm-lo" x="8" y="224" font-size="11" fill="var(--muted)" font-family="var(--mono)"></text>
+      </svg>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--accent)"></span>book established (peak)</span>
+        <span><span class="dot" style="background:var(--gain)"></span>settlement print</span>
+        <span><span style="display:inline-block;width:15px;border-top:1px dashed var(--muted)"></span>open = 100</span>
+      </div>
+    </figure>
+
+    <div class="pl">
+      <div class="plrow"><div class="k">cash / futures</div><div class="track"><div class="center"></div><div class="bar" id="b-cash"></div></div><div class="val" id="pl-cash"></div></div>
+      <div class="plrow"><div class="k">options</div><div class="track"><div class="center"></div><div class="bar" id="b-opt"></div></div><div class="val" id="pl-opt"></div></div>
+      <div class="plrow"><div class="k">total</div><div class="track"><div class="center"></div><div class="bar" id="b-tot"></div></div><div class="val" id="pl-tot"></div></div>
+    </div>
+  </section>
+
+  <section class="how">
+    <div class="step"><div class="no">01 — PUMP</div><h3>Buy the basket up</h3><p>Buy the index constituents through the morning. Your own buying lifts the index — that's permanent market impact.</p></div>
+    <div class="step"><div class="no">02 — ESTABLISH</div><h3>Set the bearish book</h3><p>At the manufactured peak, sell rich calls and buy cheap puts. A large bearish book, priced off the inflated index.</p></div>
+    <div class="step"><div class="no">03 — DUMP</div><h3>Walk it back down</h3><p>Sell the basket back off. The index falls, the book settles in the money. Cash loses a little; options win a lot.</p></div>
+  </section>
+
+  <p class="takeaway">The cash leg is a small, deliberate loss — the toll for moving the market. The options leg is many times larger, because option prices follow the index while the index itself is set in a far smaller market. <b>Move the small market; collect in the big one.</b></p>
+
+  <footer>
+    A research simulation of a documented, alleged strategy — built to understand the mechanism and how it is detected, not to trade. Executing it in live markets is manipulation and illegal. Model: Black&#8211;Scholes options over an Almgren&#8211;Chriss impact process; the interactive figures match the Python engine to the rupee. Built by Nilesh Gahlot · <a href="https://github.com/nile-ore/manufactured-move">source on GitHub</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  const N=375,S0=100,r=0.065,sig=0.20,tau0=1/252,accFrac=0.4,distFrac=0.4;
+  const W=864,H=232,padX=6,padTop=18,padBot=26;
+  const $=id=>document.getElementById(id);
+  const rm=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  function erf(x){const t=1/(1+0.3275911*Math.abs(x));const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y;}
+  const ncdf=x=>0.5*(1+erf(x/Math.SQRT2));
+  function bs(S,K,tau,kind){if(tau<=0)return kind==="call"?Math.max(S-K,0):Math.max(K-S,0);const q=Math.sqrt(tau);const d1=(Math.log(S/K)+(r+0.5*sig*sig)*tau)/(sig*q);const d2=d1-sig*q;const disc=Math.exp(-r*tau);return kind==="call"?S*ncdf(d1)-K*disc*ncdf(d2):K*disc*ncdf(-d2)-S*ncdf(-d1);}
+  function sim(acc,opt,gam,eta,sh){
+    const a=Math.round(accFrac*N),d=Math.round(distFrac*N);
+    const q=new Array(N).fill(0);
+    for(let t=0;t<a;t++)q[t]=acc/a;
+    const sell=(acc+sh)/d;for(let t=a;t<a+d;t++)q[t]=-sell;
+    const spot=new Array(N+1);spot[0]=S0;const ex=new Array(N);
+    for(let t=0;t<N;t++){ex[t]=spot[t]+eta*q[t];spot[t+1]=spot[t]+gam*q[t];}
+    let inv=0,cf=0;for(let t=0;t<N;t++){cf+=-q[t]*ex[t];inv+=q[t];}
+    const entry=spot[a],settle=spot[N],cash=cf+inv*settle;
+    const K=entry,te=tau0*(1-a/N);
+    const vE=-opt*bs(entry,K,te,"call")+opt*bs(entry,K,te,"put");
+    const vS=-opt*Math.max(settle-K,0)+opt*Math.max(K-settle,0);
+    const o=vS-vE;
+    return {spot,entryStep:a,entry,settle,cash,opt:o,total:cash+o,move:entry-settle,lev:acc>0?opt/acc:null};
+  }
+  const sgn=v=>{const n=Math.round(v);return (n>=0?"+":"−")+Math.abs(n).toLocaleString();};
+  const line=$("mm-line");let firstDraw=true;
+  function render(){
+    const acc=+$("s-acc").value,opt=+$("s-opt").value,gam=+$("s-gam").value,eta=+$("s-eta").value,sh=+$("s-sh").value;
+    $("v-acc").textContent=acc.toLocaleString();$("v-opt").textContent=opt.toLocaleString();
+    $("v-gam").textContent=gam.toFixed(4);$("v-eta").textContent=eta.toFixed(3);$("v-sh").textContent=sh.toLocaleString();
+    const R=sim(acc,opt,gam,eta,sh);
+    $("c-move").textContent=R.move.toFixed(2);
+    $("c-lev").textContent=R.lev==null?"—":R.lev.toFixed(1)+"×";
+    $("c-tot").textContent=sgn(R.total);
+    const sp=R.spot;let mn=S0,mx=S0;for(const v of sp){if(v<mn)mn=v;if(v>mx)mx=v;}
+    if(mx-mn<1e-6){mn-=1;mx+=1;}const pd=(mx-mn)*0.18,lo=mn-pd,hi=mx+pd;
+    const xOf=t=>padX+(t/N)*(W-2*padX),yOf=v=>padTop+(1-(v-lo)/(hi-lo))*(H-padTop-padBot);
+    let dstr="";for(let t=0;t<=N;t++){dstr+=(t?"L":"M")+xOf(t).toFixed(1)+" "+yOf(sp[t]).toFixed(1)+" ";}
+    line.setAttribute("d",dstr);
+    const yo=yOf(S0).toFixed(1);$("mm-open").setAttribute("y1",yo);$("mm-open").setAttribute("y2",yo);
+    const ex=xOf(R.entryStep).toFixed(1);
+    $("mm-entryx").setAttribute("x1",ex);$("mm-entryx").setAttribute("x2",ex);
+    $("mm-entry").setAttribute("cx",ex);$("mm-entry").setAttribute("cy",yOf(R.entry).toFixed(1));
+    $("mm-settle").setAttribute("cx",xOf(N).toFixed(1));$("mm-settle").setAttribute("cy",yOf(R.settle).toFixed(1));
+    $("mm-hi").textContent=hi.toFixed(1);$("mm-lo").textContent=lo.toFixed(1);
+    if(firstDraw&&!rm){const L=line.getTotalLength();line.style.transition="none";line.style.strokeDasharray=L;line.style.strokeDashoffset=L;line.getBoundingClientRect();line.style.transition="stroke-dashoffset 1.15s cubic-bezier(.4,.7,.2,1)";line.style.strokeDashoffset=0;firstDraw=false;}
+    else{line.style.strokeDasharray="none";line.style.strokeDashoffset="0";}
+    const scale=Math.max(1,Math.abs(R.cash),Math.abs(R.opt),Math.abs(R.total));
+    setBar("b-cash",R.cash,scale,"var(--loss)","var(--gain)");
+    setBar("b-opt",R.opt,scale,"var(--loss)","var(--gain)");
+    setBar("b-tot",R.total,scale,"var(--loss)","var(--accent)");
+    $("pl-cash").textContent=sgn(R.cash);$("pl-opt").textContent=sgn(R.opt);$("pl-tot").textContent=sgn(R.total);
+  }
+  function setBar(id,v,scale,negc,posc){const el=$(id);const pct=Math.min(50,Math.abs(v)/scale*50);
+    if(v>=0){el.style.left="50%";el.style.right="auto";}else{el.style.right="50%";el.style.left="auto";}
+    el.style.width=pct+"%";el.style.background=v>=0?posc:negc;}
+  ["s-acc","s-opt","s-gam","s-eta","s-sh"].forEach(id=>$(id).addEventListener("input",render));
+  const tb=$("themeBtn");
+  tb.addEventListener("click",()=>{const cur=document.documentElement.getAttribute("data-theme");const isDark=cur?cur==="dark":matchMedia("(prefers-color-scheme:dark)").matches;document.documentElement.setAttribute("data-theme",isDark?"light":"dark");});
+  render();
+})();
+</script>
+</body>
+</html>

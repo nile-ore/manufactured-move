@@ -12,6 +12,12 @@ peak, settles in the money.**
 **New here? Read [`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md)** — a plain-English walkthrough
 of the strategy, the model, and how to read the results (no quant background assumed).
 
+**▶ Try it live:** open [`docs/index.html`](docs/index.html) in any browser — no install — for an
+interactive version (drag the sliders, watch the manufactured path and the P&L split respond). Once
+GitHub Pages is enabled (Settings → Pages → Deploy from branch → `main` / `/docs`), it's hosted at
+`https://nile-ore.github.io/manufactured-move/`. The demo reimplements the exact model in JS and
+matches the Python engine to the rupee.
+
 ---
 
 ## The mechanism
@@ -145,7 +151,9 @@ recalibrated to real depth (e.g. from impact regressions on constituent order bo
 - [ ] **P3 — Agent-based LOB (stretch):** market-maker + noise agents; an RL agent that
       *rediscovers* the pattern; a SEBI-style surveillance signal (own aggressive flow vs.
       adverse index moves) to flag it.
-- [ ] **P4 — Dashboard:** Streamlit sliders over the parameters, live path + P&L.
+- [x] **P4 — Shareable interactive demo:** self-contained [`docs/index.html`](docs/index.html)
+      (Black–Scholes + Almgren–Chriss reimplemented in JS, figures matched to the Python), deployable
+      to GitHub Pages. Optional next: a Streamlit app driving the Python engine directly.
 
 ## References
 
