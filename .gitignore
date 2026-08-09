@@ -1,0 +1,27 @@
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# envs
+.venv/
+venv/
+.env
+
+# tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# generated report artifacts (keep the dir, ignore the outputs)
+reports/*.png
+reports/*.csv
+reports/*.parquet
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/

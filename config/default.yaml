@@ -1,0 +1,19 @@
+# Default scenario for manufactured-move.
+# Spot is normalised to 100 for transparency; see README for scaling to BANKNIFTY.
+
+market:
+  s0: 100.0            # spot at the open
+  n_steps: 375         # minutes in the NSE session (09:15-15:30)
+  sigma_annual: 0.20   # annualised vol (drives both the path and BS marks)
+  r: 0.065             # risk-free rate
+  gamma: 0.002         # permanent impact: spot points per unit of net trade
+  eta: 0.004           # temporary impact: slippage per unit traded per step
+  tau0_days: 1.0       # time to expiry at the open (expiry = today's close)
+
+strategy:
+  accumulate_units: 1000.0    # total bought during the pump
+  accumulate_frac: 0.40       # fraction of the session spent accumulating
+  distribute_frac: 0.40       # fraction spent distributing
+  end_short_units: 0.0        # extra net-short into the close (0 = round-trip to flat)
+  options_units: 5000.0       # size per leg of the bearish options book
+  options_structure: synthetic_short   # synthetic_short | risk_reversal | otm_puts
