@@ -11,7 +11,6 @@ plotted as a heatmap.
 
 from __future__ import annotations
 
-import copy
 from dataclasses import replace
 
 import numpy as np
@@ -43,8 +42,7 @@ def sweep_2d(
     grid = np.empty((len(y_values), len(x_values)), dtype=float)
     for i, yv in enumerate(y_values):
         for j, xv in enumerate(x_values):
-            m, s = _set_param(copy.copy(market), copy.copy(strategy), x_name, xv)
+            m, s = _set_param(market, strategy, x_name, xv)  # `replace` returns copies; originals untouched
             m, s = _set_param(m, s, y_name, yv)
-            res = simulate(m, s)
-            grid[i, j] = getattr(res, metric)
+            grid[i, j] = getattr(simulate(m, s), metric)
     return grid

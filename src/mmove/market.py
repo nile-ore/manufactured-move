@@ -70,17 +70,17 @@ def evolve_spot(
     if cash_trades.shape[0] != n:
         raise ValueError(f"cash_trades must have length n_steps={n}, got {cash_trades.shape[0]}")
 
-    spot = np.empty(n + 1, dtype=float)
-    exec_price = np.empty(n, dtype=float)
-    spot[0] = market.s0
-
     noise = (
         rng.normal(0.0, market.sigma_step, size=n)
         if (with_noise and rng is not None)
-        else np.zeros(n)
+        else 0.0
     )
-    for t in range(n):
-        q = cash_trades[t]
-        exec_price[t] = spot[t] + market.eta * q          # temporary impact on the fill
-        spot[t + 1] = spot[t] + market.gamma * q + noise[t]  # permanent impact persists
+    # The trade schedule doesn't depend on the spot, so the recursion
+    #   spot[t+1] = spot[t] + gamma*q[t] + noise[t]
+    # is a plain cumulative sum. Vectorising it (no Python loop) is the fast
+    # path that makes the Monte Carlo cheap, and is exactly equivalent.
+    spot = np.empty(n + 1, dtype=float)
+    spot[0] = market.s0
+    spot[1:] = market.s0 + np.cumsum(market.gamma * cash_trades + noise)  # permanent impact + diffusion
+    exec_price = spot[:n] + market.eta * cash_trades                      # temporary impact on each fill
     return spot, exec_price
