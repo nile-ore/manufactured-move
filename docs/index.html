@@ -74,7 +74,7 @@
 
   <div class="eyebrow">Expiry-day strategy · interactive simulation</div>
   <h1>Manufactured Move</h1>
-  <p class="thesis">Spend a little to move the index in the <b>small</b> cash market, so a <b>much larger</b> options book — set at the peak you just created — settles in your favour. This is the trade at the centre of SEBI's case against Jane Street, rebuilt as a sandbox you can steer.</p>
+  <p class="thesis">Two markets price the same index: a <b>small</b> one where trading actually moves the price, and a <b>much larger</b> options market that only follows along. Here's how you turn that gap into money — one step at a time — and what you'd walk away with.</p>
 
   <section class="panel" aria-label="Interactive simulation">
     <div class="controls">
@@ -116,15 +116,15 @@
   </section>
 
   <section class="how">
-    <div class="step"><div class="no">01 — PUMP</div><h3>Buy the basket up</h3><p>Buy the index constituents through the morning. Your own buying lifts the index — that's permanent market impact.</p></div>
-    <div class="step"><div class="no">02 — ESTABLISH</div><h3>Set the bearish book</h3><p>At the manufactured peak, sell rich calls and buy cheap puts. A large bearish book, priced off the inflated index.</p></div>
-    <div class="step"><div class="no">03 — DUMP</div><h3>Walk it back down</h3><p>Sell the basket back off. The index falls, the book settles in the money. Cash loses a little; options win a lot.</p></div>
+    <div class="step"><div class="no">STEP 1</div><h3>Buy the index up</h3><p>All morning, keep buying the index. Your own buying pushes it up — from 100 to about 102. The price is now high, and you're holding a lot of it.</p></div>
+    <div class="step"><div class="no">STEP 2</div><h3>Bet against it, big</h3><p>At that peak, turn to the far larger options market: sell calls (expensive now) and buy puts (cheap now). A big bet that the index will fall — priced off the inflated 102.</p></div>
+    <div class="step"><div class="no">STEP 3</div><h3>Sell it back down</h3><p>Now sell the index back off. It slides to 100. Your options bet, placed right at the top, is now deep in the money.</p></div>
   </section>
 
-  <p class="takeaway">The cash leg is a small, deliberate loss — the toll for moving the market. The options leg is many times larger, because option prices follow the index while the index itself is set in a far smaller market. <b>Move the small market; collect in the big one.</b></p>
+  <p class="takeaway"><b>The result.</b> Moving the index cost you about 40. The options bet earned about 10,079. You walk away with <b>roughly +10,000</b> — over 250× what it cost to move the market. You paid a little in the small market and collected a lot in the big one. Steer the sliders above to change the trade and watch the number move.</p>
 
   <footer>
-    A research simulation of a documented, alleged strategy — built to understand the mechanism and how it is detected, not to trade. Executing it in live markets is manipulation and illegal. Model: Black&#8211;Scholes options over an Almgren&#8211;Chriss impact process; the interactive figures match the Python engine to the rupee. Built by Nilesh Gahlot · <a href="https://github.com/nile-ore/manufactured-move">source on GitHub</a>.
+    An educational market-microstructure simulation — a sandbox for understanding the mechanism, not trading advice. Doing this with real orders would be illegal market manipulation. Model: Black&#8211;Scholes options over an Almgren&#8211;Chriss impact process. Built by Nilesh Gahlot · <a href="https://github.com/nile-ore/manufactured-move">source on GitHub</a>.
   </footer>
 </div>
 
